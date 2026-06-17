@@ -5,21 +5,24 @@ MEMORY {
 }
 
 SECTIONS {
+    . = 0x40000000;
+    
     .text ALIGN(0x1000) : {
         *(.text.boot)
         *(.text*)
         *(.rodata*)
         . = ALIGN(0x1000);
     } > KERNEL
-
+    
     .data ALIGN(0x1000) : {
         *(.data*)
         . = ALIGN(0x1000);
     } > KERNEL
-
+    
     .bss ALIGN(0x1000) : {
         __bss_start = .;
         *(.bss*)
+        *(COMMON)
         . = ALIGN(0x1000);
         __bss_end = .;
     } > KERNEL
@@ -28,5 +31,8 @@ SECTIONS {
         *(.note.GNU-stack)
         *(.gnu_debuglink)
         *(.gnu_debugaltlink)
+        *(.note.*)
+        *(.comment)
+        *(.eh_frame*)
     }
 }
