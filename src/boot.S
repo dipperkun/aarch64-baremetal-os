@@ -28,10 +28,11 @@ _start:
     b       .clear_bss
 
 .bss_done:
-    /* Set EL1 exception vectors */
+    /* Set EL1 exception vectors BEFORE enabling MMU */
     adrp    x0, exc_vector_table
     add     x0, x0, :lo12:exc_vector_table
     msr     vbar_el1, x0
+    isb
     
     /* Call main kernel */
     bl      kernel_main
@@ -55,7 +56,7 @@ _secondary_cpu:
     br      x2
     b       .
 
-/* Exception Vector Table */
+/* Exception Vector Table - MUST be 2KB aligned */
 .section .text
 .align 11
 .globl exc_vector_table
@@ -101,13 +102,31 @@ exc_vector_table:
     b       exc_serror
 
 exc_sync:
-    b       handle_exception
+    stp     x0, x1, [sp, #-16]!
+    adrp    x0, sync_handler
+    add     x0, x0, :lo12:sync_handler
+    blr     x0
+    ldp     x0, x1, [sp], #16
+    eret
 
 exc_irq:
-    b       handle_irq
+    stp     x0, x1, [sp, #-16]!
+    adrp    x0, irq_handler
+    add     x0, x0, :lo12:irq_handler
+    blr     x0
+    ldp     x0, x1, [sp], #16
+    eret
 
 exc_fiq:
-    b       handle_fiq
+    b       .
 
 exc_serror:
-    b       handle_serror
+    b       .
+
+.globl sync_handler
+sync_handler:
+    ret
+
+.globl irq_handler
+irq_handler:
+    ret
