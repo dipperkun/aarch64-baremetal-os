@@ -9,22 +9,25 @@ OBJDUMP = $(CROSS_COMPILE)objdump
 
 CFLAGS = -mcpu=cortex-a53 -march=armv8-a \
          -nostdlib -fno-builtin -fno-common \
-         -Wall -Werror -O2 -g
+         -Wall -Werror -O2 -g -I./include
 
 LDFLAGS = -nostdlib -T linker.ld
 
-SOURCES = src/boot.S \
-          src/main.c \
-          src/uart.c \
-          src/mmu.c \
-          src/gicv3.c \
-          src/scheduler.c \
-          src/psci.c \
-          src/task.c \
-          src/irq_handler.c \
-          src/timer.c
+C_SOURCES = src/main.c \
+            src/uart.c \
+            src/mmu.c \
+            src/gicv3.c \
+            src/scheduler.c \
+            src/psci.c \
+            src/task.c \
+            src/irq_handler.c \
+            src/timer.c
 
-OBJECTS = $(SOURCES:.c=.o) $(SOURCES:.S=.o)
+ASM_SOURCES = src/boot.S
+
+C_OBJECTS = $(C_SOURCES:.c=.o)
+ASM_OBJECTS = $(ASM_SOURCES:.S=.o)
+OBJECTS = $(C_OBJECTS) $(ASM_OBJECTS)
 
 IMAGE = os.elf
 BIN = os.bin
