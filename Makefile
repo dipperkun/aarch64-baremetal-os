@@ -11,23 +11,16 @@ CFLAGS = -mcpu=cortex-a53 -march=armv8-a \
          -nostdlib -fno-builtin -fno-common \
          -Wall -Werror -O2 -g -I./include
 
+ASFLAGS = $(CFLAGS)
+
 LDFLAGS = -nostdlib -T linker.ld
 
-C_SOURCES = src/main.c \
-            src/uart.c \
-            src/mmu.c \
-            src/gicv3.c \
-            src/scheduler.c \
-            src/psci.c \
-            src/task.c \
-            src/irq_handler.c \
-            src/timer.c
+C_SOURCES := $(shell find src -name "*.c")
+ASM_SOURCES := $(shell find src -name "*.S")
 
-ASM_SOURCES = src/boot.S
-
-C_OBJECTS = $(C_SOURCES:.c=.o)
-ASM_OBJECTS = $(ASM_SOURCES:.S=.o)
-OBJECTS = $(C_OBJECTS) $(ASM_OBJECTS)
+C_OBJECTS := $(C_SOURCES:.c=.o)
+ASM_OBJECTS := $(ASM_SOURCES:.S=.o)
+OBJECTS := $(C_OBJECTS) $(ASM_OBJECTS)
 
 IMAGE = os.elf
 BIN = os.bin
@@ -39,15 +32,18 @@ $(BIN): $(IMAGE)
 	@echo "Built $@"
 
 $(IMAGE): $(OBJECTS) linker.ld
+	@echo "Linking $(IMAGE)..."
 	$(LD) $(LDFLAGS) -o $@ $(filter-out linker.ld, $^)
 	$(OBJDUMP) -d $(IMAGE) > os.dis
 	@echo "Built $@"
 
-src/%.o: src/%.c
+%.o: %.c
+	@echo "Compiling $<..."
 	$(CC) $(CFLAGS) -c $< -o $@
 
-src/%.o: src/%.S
-	$(CC) $(CFLAGS) -c $< -o $@
+%.o: %.S
+	@echo "Assembling $<..."
+	$(CC) $(ASFLAGS) -c $< -o $@
 
 run: $(BIN)
 	qemu-system-aarch64 -machine virt -cpu cortex-a53 \
@@ -63,5 +59,9 @@ debug: $(IMAGE)
 
 clean:
 	rm -f $(OBJECTS) $(IMAGE) $(BIN) os.dis
+	find . -name "*.o" -delete
 
-.PHONY: all run debug clean
+distclean: clean
+	rm -f os.dis
+
+.PHONY: all run debug clean distclean
