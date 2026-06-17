@@ -82,18 +82,22 @@ void gicv3_disable_irq(uint32_t irq)
 static void gicv3_cpu_init(void)
 {
     /* Set up CPU interface (ICC) registers */
+    /* Using S3_x_Cy_Cz_w encoding for GICv3 system registers */
     
     /* Enable Group 1 interrupts on this CPU */
+    /* ICC_GRPEN1_EL1 = S3_0_C12_C12_7 */
     uint64_t icc_grpen1_el1;
-    asm volatile("mrs %0, ICC_GRPEN1_EL1" : "=r"(icc_grpen1_el1));
+    asm volatile("mrs %0, S3_0_C12_C12_7" : "=r"(icc_grpen1_el1));
     icc_grpen1_el1 |= 1;
-    asm volatile("msr ICC_GRPEN1_EL1, %0" : : "r"(icc_grpen1_el1));
+    asm volatile("msr S3_0_C12_C12_7, %0" : : "r"(icc_grpen1_el1));
     
     /* Set binary point (no priority grouping for simplicity) */
-    asm volatile("msr ICC_BPR1_EL1, %0" : : "r"(0));
+    /* ICC_BPR1_EL1 = S3_0_C12_C12_3 */
+    asm volatile("msr S3_0_C12_C12_3, %0" : : "r"(0));
     
     /* Set priority mask to allow all interrupts */
-    asm volatile("msr ICC_PMR_EL1, %0" : : "r"(0xff));
+    /* ICC_PMR_EL1 = S3_0_C4_C6_0 */
+    asm volatile("msr S3_0_C4_C6_0, %0" : : "r"(0xff));
 }
 
 void gicv3_cpu_setup(void)
